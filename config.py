@@ -22,7 +22,7 @@ CONFIG = {
   'site_description': 'Find out when far away friends are finally nearby',
   # If true, we use local_server, and log actions instead of POSTing to foursquare
   # Be sure to set this to false when you actually want to deploy.
-  'local_dev': False,
+  'local_dev': True,
   # AppEngine debug mode
   'debug': True,
   # These can either be a path (on this server), or an external URI

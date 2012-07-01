@@ -7,7 +7,7 @@ except ImportError: import json
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
 
-from model import Friend, SquaredarUser
+from model import SquaredarUser
 from abstract_app import AbstractApp
 
 
@@ -57,17 +57,14 @@ class Squaredar(AbstractApp):
     sq_user.history.insert(0, db.Text(json.dumps(entry)))
     if len(sq_user.history) > self.MOVING_AVG_WINDOW:
       sq_user.history.pop()
-    sq_user.put()
     
     recent_checkins = client.checkins.recent(params={'ll': latlng})
-    
-    friends = Friend.all().filter("user_fs_id = ", checkin_json['user']['id'])
-    friend_map = {}
-    for friend in friends:
-      friend_map[friend.friend_fs_id] = friend
-    
+    if not sq_user.friends:
+      sq_user.friends = "{}"
+    friend_map = json.loads(sq_user.friends)
+
     close_friend_tuples = []
-    
+
     # Find friends who are closer than normal
     for friend_checkin in recent_checkins['recent']:
       friend_user = friend_checkin['user']
@@ -81,7 +78,7 @@ class Squaredar(AbstractApp):
       friend_id = str(friend_checkin['user']['id'])
       if friend_id in friend_map:
         friend = friend_map[friend_id]
-        avg_distance = friend.avg_distance
+        avg_distance = friend['avg_distance']
         if distance < (avg_distance / 100):
           close_friend_tuples.append([friend, friend_checkin])
     
@@ -92,7 +89,7 @@ class Squaredar(AbstractApp):
       self.sendReply(client, alerts_json, checkin_json)
       for alert in alerts_json['alerts']:
         friend_alerts.append(alert['friend_id'])
-    
+
     # Update friend distances
     for friend_checkin in recent_checkins['recent']:
       if 'venue' not in friend_checkin:
@@ -112,8 +109,8 @@ class Squaredar(AbstractApp):
       # Friend has been spotted before
       if friend_id in friend_map:
         friend = friend_map[friend_id]
-        spottings = friend.spottings
-        last_spotting_ts = json.loads(spottings[0])['timestamp']
+        spottings = friend['spottings']
+        last_spotting_ts = spottings[0]['timestamp']
         if last_spotting_ts == friend_checkin['createdAt']:
           # Already recorded this particular spotting
           # If we alerted this time, remove the old spotting to be replaced.
@@ -125,13 +122,19 @@ class Squaredar(AbstractApp):
         spottings.insert(0, spotting)
         if len(spottings) > self.MOVING_AVG_WINDOW:
           spottings.pop()
-        friend.spottings = spottings
-        friend.avg_distance = self.calculateAverageDistance(friend)
-        friend.put()
+        friend['spottings'] = spottings
+        friend['avg_distance'] = self.calculateAverageDistance(friend)
+        friend_map[friend_id] = friend
+#        friend.put()
       else:
         friend = self.makeFriend(friend_checkin, checkin_json)
-        friend.spottings = [ spotting ]
-        friend.put()
+        friend['spottings'] = [ spotting ]
+        friend_map[friend_id] = friend
+    sq_user.friends = json.dumps(friend_map)
+
+    # Save changes
+    sq_user.put()
+
 
   def geoDistance(self, location_a, location_b):
     lat_a = location_a['lat']
@@ -282,7 +285,7 @@ class Squaredar(AbstractApp):
                  'alerted' : alerted,
                  'location' : self.trimLocation(location_json)
                 }
-    return db.Text(json.dumps(spotting))
+    return spotting
   
   def makeRegionName(self, location_json, relative_location_json=None):
     regions = []
@@ -311,23 +314,22 @@ class Squaredar(AbstractApp):
     return False
       
   def makeFriend(self, friend_checkin, user_checkin):
-    friend = Friend()
-    friend.user_fs_id = user_checkin['user']['id']
+    friend = {}
     friend_json = friend_checkin['user']
-    friend.friend_fs_id = friend_json['id']
+    friend['id'] = friend_json['id']
     name = ""
     if 'firstName' in friend_json:
       name = friend_json['firstName']
     if 'lastName' in friend_json:
       name += ' ' + friend_json['lastName']
-    friend.name = name
-    friend.avg_distance = self.calculateAverageDistance(friend)
+    friend['name'] = name
+    friend['spottings'] = []
+    friend['avg_distance'] = self.calculateAverageDistance(friend)
     return friend
 
   def calculateAverageDistance(self, friend):
     avg_distance = 0
-    for spotting in friend.spottings:
-      spotting_json = json.loads(spotting)
-      avg_distance += spotting_json['distance']
+    for spotting in friend['spottings']:
+      avg_distance += spotting['distance']
     avg_distance = avg_distance / self.MOVING_AVG_WINDOW
     return avg_distance

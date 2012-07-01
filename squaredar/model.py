@@ -12,3 +12,4 @@ class SquaredarUser(db.Model):
   """A user of Squaredar"""
   fs_id = db.StringProperty()
   history = db.ListProperty(db.Text)
+  friends = db.TextProperty(db.Text)
