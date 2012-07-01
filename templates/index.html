@@ -2,10 +2,26 @@
 <html>
 <head>
   <title>{{ name|escape }}</title>
+  <style>
+    body {
+      background-color: #faf9f7;
+      font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    }
+    .policy {
+      text-decoration: none;
+      color: grey;
+    }
+    .logo {
+      vertical-align: text-top;
+    }
+    #footer {
+      padding-top: 30px;
+    }
+  </style>
   <meta content="width=320" name="viewport" />
 </head>
 <body>
-<h1>{{ name|escape }}</h1>
+<h1><img class="logo" src="img/Squaredar_32.png"> {{ name|escape }}</h1>
   <div class="description">
     <p>{{ description|escape }}</p>
   </div>
@@ -28,5 +44,13 @@
                 }
               });
   </script>
+  <div id="footer">
+    <p class="policy">
+      <a class="policy"
+        href="http://www.privacychoice.org/policy/mobile?policy=03c5af63d513b3efb7e327d8c416fcac"
+        >Privacy Policy</a> - 
+        Created by <a class="policy" href="https://twitter.com/ak">@ak</a> - Logo by <a class="policy" href="https://twitter.com/jeremylv/">@jeremylv</a>
+    </p>
+  </div>
 </body>
 </html>

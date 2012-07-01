@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Squaredar</title>
+  <meta content="width=320" name="viewport" />
+    <style>
+      body {
+        background-color: #faf9f7;
+        font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+      }
+      a.alert   { text-decoration:none; color:inherit;}
+      div.alert { padding-left:1em; padding-top: 0.5em; padding-bottom: 0.5em; }
+    </style>
+</head>
+<body>
+<h1>Squaredar</h1>
+  <div>
+    {% for alert in alerts %}
+    <a class="alert" href="foursquare://checkins/{{alert.checkin_id}}">
+      <div class="alert">
+        {{ alert.justification|escape }}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</body>
+</html>

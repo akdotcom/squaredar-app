@@ -1,12 +1,12 @@
-application: ENTER_YOURS_HERE
-version: 1
+application: squaredar
+version: 3
 runtime: python27
 api_version: 1
 threadsafe: false
 
 ## Uncomment to enable App Engine appstats
-# builtins:
-# - appstats: on
+builtins:
+- appstats: on
 
 handlers:
 
@@ -26,6 +26,9 @@ handlers:
 
 - url: /img
   static_dir: img
+
+- url: /static
+  static_dir: static
 
 - url: /.*
   script: main.py
