@@ -24,10 +24,10 @@
   <div>
     {% for alert in alerts %}
     <a class="alert" href="foursquare://checkins/{{alert.checkin_id}}">
+      <div class="indicator">&gt;</div>
       <div class="alert">
         {{ alert.justification|escape }}
       </div>
-      <div class="indicator">&gt;</div>
     </a>
     {% endfor %}
   </div>
