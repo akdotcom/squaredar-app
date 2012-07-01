@@ -10,6 +10,13 @@
       }
       a.alert   { text-decoration:none; color:inherit;}
       div.alert { padding-left:1em; padding-top: 0.5em; padding-bottom: 0.5em; }
+      .indicator {
+        float: right;
+        font-size: 24px;
+        vertical-align: text-bottom;
+        font-family: 'Comic Sans MS';
+        padding-left: 10px;
+      }
     </style>
 </head>
 <body>
@@ -20,6 +27,7 @@
       <div class="alert">
         {{ alert.justification|escape }}
       </div>
+      <div class="indicator">&gt;</div>
     </a>
     {% endfor %}
   </div>
