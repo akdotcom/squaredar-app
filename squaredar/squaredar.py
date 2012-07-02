@@ -13,9 +13,9 @@ from abstract_app import AbstractApp
 
 class Squaredar(AbstractApp):
   MOVING_AVG_WINDOW = 10
-  
+
   IS_TRAVELING = False
-  
+
   def contentGet(self, client, content_info):
     alerts_json = json.loads(content_info.content)
     path = os.path.join(os.path.dirname(__file__), 'reply.html')
@@ -26,7 +26,7 @@ class Squaredar(AbstractApp):
     venue_json = checkin_json['venue']
     lat = venue_json['location']['lat']
     lng = venue_json['location']['lng']
-    latlng = lat+','+lng
+    latlng = lat + ',' + lng
 
     request = SquaredarUser.all().filter('fs_id =', checkin_json['user']['id'])
     sq_user = request.get()
@@ -48,16 +48,16 @@ class Squaredar(AbstractApp):
       old_location = old_entry['location']
       location = entry['location']
       if self.geoDistance(old_location, location) > 2:
-        logging.info('User is traveling from %s to %s' % 
+        logging.info('User is traveling from %s to %s' %
                      (self.makeRegionName(old_location, location),
                       self.makeRegionName(location)))
         self.IS_TRAVELING = True
         break
-    
+
     sq_user.history.insert(0, db.Text(json.dumps(entry)))
     if len(sq_user.history) > self.MOVING_AVG_WINDOW:
       sq_user.history.pop()
-    
+
     recent_checkins = client.checkins.recent(params={'ll': latlng})
     if not sq_user.friends:
       sq_user.friends = "{}"
@@ -81,7 +81,7 @@ class Squaredar(AbstractApp):
         avg_distance = friend['avg_distance']
         if distance < (avg_distance / 100):
           close_friend_tuples.append([friend, friend_checkin])
-    
+
     user_id = checkin_json['user']['id']
     friend_alerts = []
     alerts_json = self.makeReply(client, close_friend_tuples, checkin_json)
@@ -170,9 +170,9 @@ class Squaredar(AbstractApp):
                            'friend_id' : friend_checkin['user']['id'],
                            'checkin_ts' : friend_checkin['createdAt']}
         content_array.append(friend_content)
-    
+
     msg = ''
-    
+
     if len(names) == 0:
       return
     elif len(names) == 1:
@@ -200,8 +200,8 @@ class Squaredar(AbstractApp):
                                 content=content,
                                 text=encoded_message,
                                 reply=True)
-     
-    
+
+
   def shouldReply(self, friend, friend_checkin, user_checkin):
     # TODO(ak): Should check if it's replied you in the past.
     # Or maybe see if the person has been "near" for a while?
@@ -215,27 +215,26 @@ class Squaredar(AbstractApp):
 
     # If you've checked in to the same venue as them within the last 4 days,
     # don't bother replying. This is to avoid the co-worker weekend trip issue.
-    for spotting in friend.spottings:
-      spotting_json = json.loads(spotting)
-      if spotting_json['same_venue']:
-        spotting_age = current_time - spotting_json['timestamp']
+    for spotting in friend['spottings']:
+      if spotting['same_venue']:
+        spotting_age = current_time - spotting['timestamp']
         if spotting_age < 5 * 86400:
           return False
-      if 'alerted' in spotting_json and spotting_json['alerted']:
+      if 'alerted' in spotting and spotting['alerted']:
         return False
-        
+
     friend_time = friend_checkin['createdAt']
-    
+
     # If you're traveling, you don't care about the following checks.
     if self.IS_TRAVELING:
       return True
-    
+
     # Check if it's a generally close friend with a stale check-in.
     if friend.avg_distance < 100000 and (current_time - friend_time) > 10800:
       return False
 
     return True
-      
+
   def makeJustification(self, friend, friend_checkin, user_checkin):
     friend_distance = friend_checkin['distance']
     friend_venue = friend_checkin['venue']
@@ -253,24 +252,23 @@ class Squaredar(AbstractApp):
       message = '%s is in %s (last seen @ %s)' % (friend.name, region_name, friend_venue['name'])
     elif friend_distance < 1000000:
       message = '%s is in %s' % (friend.name, region_name, friend_venue['name'])
-    
+
     # Where were they perviously? Pick the furthest away place they were
     # over half of the moving window.
     old_distance = 0
     old_region_name = ''
-    for spotting in friend.spottings[0:self.MOVING_AVG_WINDOW/2]:
-      spotting_json = json.loads(spotting)
-      if spotting_json['distance'] > old_distance:
-        old_distance = spotting_json['distance']
-        old_region_name = spotting_json['region_name']
+    for spotting in friend['spottings'][0:self.MOVING_AVG_WINDOW / 2]:
+      if spotting['distance'] > old_distance:
+        old_distance = spotting['distance']
+        old_region_name = spotting['region_name']
 
     if not self.IS_TRAVELING:
       if old_region_name and old_region_name != region_name:
         message += ', back from %s' % old_region_name
-    
+
     return message
-      
-  
+
+
   def makeSpotting(self, friend_checkin, user_checkin, alerted=False):
     location_json = friend_checkin['venue']['location']
     user_venue_id = user_checkin['venue']['id']
@@ -286,7 +284,7 @@ class Squaredar(AbstractApp):
                  'location' : self.trimLocation(location_json)
                 }
     return spotting
-  
+
   def makeRegionName(self, location_json, relative_location_json=None):
     regions = []
     if relative_location_json:
@@ -306,13 +304,13 @@ class Squaredar(AbstractApp):
       else:
         regions.append('somewhere')
     return ', '.join(regions)
-    
+
   def hasDifferent(self, field, target, relative):
     if field in target:
       if field not in relative or target[field] != relative[field]:
         return True
     return False
-      
+
   def makeFriend(self, friend_checkin, user_checkin):
     friend = {}
     friend_json = friend_checkin['user']
