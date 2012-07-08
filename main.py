@@ -16,9 +16,8 @@ from model import UserSession, UserToken
 import utils
 
 from google.appengine.api import taskqueue
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
+import webapp2
 
 class OAuthConnectErrorException(Exception):
   pass
@@ -27,7 +26,7 @@ class OAuthConnectDeniedException(Exception):
   pass
 
 
-class OAuth(webapp.RequestHandler):
+class OAuth(webapp2.RequestHandler):
   """Handle the OAuth redirect back to the service."""
   def post(self):
     self.get()
@@ -83,7 +82,7 @@ class OAuth(webapp.RequestHandler):
     self.redirect(redirect_uri)
 
 
-class IsAuthd(webapp.RequestHandler):
+class IsAuthd(webapp2.RequestHandler):
   """Returns whether or not a user has connected their foursquare account"""
   def get(self):
     user_token = UserToken.get_from_cookie(self.request.cookies.get('session', None))
@@ -99,7 +98,7 @@ class IsAuthd(webapp.RequestHandler):
     self.response.out.write(is_authd)
 
 
-class ProcessCheckin(webapp.RequestHandler):
+class ProcessCheckin(webapp2.RequestHandler):
   PREFIX = "/checkin"
 
   def post(self):
@@ -117,7 +116,7 @@ class ProcessCheckin(webapp.RequestHandler):
                   params={'checkin': self.request.get('checkin')})
 
 
-class HomePage(webapp.RequestHandler):
+class HomePage(webapp2.RequestHandler):
   def get(self):
     client_id = CONFIG['client_id']
     params = {'client_id': client_id}
@@ -129,16 +128,10 @@ class HomePage(webapp.RequestHandler):
     self.response.out.write(template.render(path, params))
 
 
-application = webapp.WSGIApplication([('/oauth.*', OAuth),
-                                      ('/checkin', ProcessCheckin),
-                                      ('/isAuthd', IsAuthd),
-                                      ('/', HomePage),
-                                      ('/_checkin', APP_CLASS),
-                                      ('/.*', APP_CLASS)],
-                                     debug=CONFIG['debug'])
-
-def main():
-  run_wsgi_app(application)
-
-if __name__ == "__main__":
-  main()
+app = webapp2.WSGIApplication([('/oauth.*', OAuth),
+                               ('/checkin', ProcessCheckin),
+                               ('/isAuthd', IsAuthd),
+                               ('/', HomePage),
+                               ('/_checkin', APP_CLASS),
+                               ('/.*', APP_CLASS)],
+                              debug=CONFIG['debug'])

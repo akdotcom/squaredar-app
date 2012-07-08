@@ -2,7 +2,7 @@ application: squaredar
 version: 4
 runtime: python27
 api_version: 1
-threadsafe: false
+threadsafe: true
 
 ## Uncomment to enable App Engine appstats
 builtins:
@@ -11,12 +11,12 @@ builtins:
 handlers:
 
 - url: /_checkin/.*
-  script: main.py
+  script: main.app
   login: admin
   secure: always
 
 - url: /oauth.*
-  script: main.py
+  script: main.app
   secure: always
 
 - url: /.*favicon.ico
@@ -31,5 +31,5 @@ handlers:
   static_dir: static
 
 - url: /.*
-  script: main.py
+  script: main.app
   secure: always
