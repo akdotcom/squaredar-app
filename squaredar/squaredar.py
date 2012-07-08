@@ -125,7 +125,6 @@ class Squaredar(AbstractApp):
         friend['spottings'] = spottings
         friend['avg_distance'] = self.calculateAverageDistance(friend)
         friend_map[friend_id] = friend
-#        friend.put()
       else:
         friend = self.makeFriend(friend_checkin, checkin_json)
         friend['spottings'] = [ spotting ]
@@ -162,7 +161,7 @@ class Squaredar(AbstractApp):
     content_array = []
     for (friend, friend_checkin) in friend_tuples:
       if self.shouldReply(friend, friend_checkin, user_checkin):
-        names.append(friend.name)
+        names.append(friend['name'])
         msg = self.makeJustification(friend, friend_checkin, user_checkin)
         justifications.append(msg)
         friend_content = { 'checkin_id' : friend_checkin['id'],
@@ -230,7 +229,7 @@ class Squaredar(AbstractApp):
       return True
 
     # Check if it's a generally close friend with a stale check-in.
-    if friend.avg_distance < 100000 and (current_time - friend_time) > 10800:
+    if friend['avg_distance'] < 100000 and (current_time - friend_time) > 10800:
       return False
 
     return True
@@ -243,15 +242,15 @@ class Squaredar(AbstractApp):
                                       user_venue['location'])
     message = ''
     if friend_distance < 100:
-      message = '%s is super nearby @ %s' % (friend.name, friend_venue['name'])
+      message = '%s is super nearby @ %s' % (friend['name'], friend_venue['name'])
     elif friend_distance < 1000:
-      message = '%s is nearby @ %s' % (friend.name, friend_venue['name'])
+      message = '%s is nearby @ %s' % (friend['name'], friend_venue['name'])
     elif friend_distance < 10000:
-      message = '%s is in town (last seen @ %s)' % (friend.name, friend_venue['name'])
+      message = '%s is in town (last seen @ %s)' % (friend['name'], friend_venue['name'])
     elif friend_distance < 100000:
-      message = '%s is in %s (last seen @ %s)' % (friend.name, region_name, friend_venue['name'])
+      message = '%s is in %s (last seen @ %s)' % (friend['name'], region_name, friend_venue['name'])
     elif friend_distance < 1000000:
-      message = '%s is in %s' % (friend.name, region_name, friend_venue['name'])
+      message = '%s is in %s' % (friend['name'], region_name, friend_venue['name'])
 
     # Where were they perviously? Pick the furthest away place they were
     # over half of the moving window.
@@ -264,7 +263,7 @@ class Squaredar(AbstractApp):
 
     if not self.IS_TRAVELING:
       if old_region_name and old_region_name != region_name:
-        message += ', back from %s' % old_region_name
+        message += ', previously in %s' % old_region_name
 
     return message
 
